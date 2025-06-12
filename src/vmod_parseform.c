@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <cache/cache_varnishd.h>
 #include "vcl.h"
@@ -13,164 +12,163 @@
 #include "vsb.h"
 #include "vtim.h"
 #include "vcc_parseform_if.h"
-
-struct vmod_priv_parseform {
-    unsigned magic;
-#define VMOD_PRIV_PARSEFORM_MAGIC 0xf8afce84
-    struct vsb *vsb;
+struct vmod_priv_parseform{
+	unsigned	magic;
+#define VMOD_PRIV_PARSEFORM_MAGIC	0xf8afce84
+	struct vsb	*vsb;
 };
 
 static const struct gethdr_s vmod_priv_parseform_contenttype =
-    { HDR_REQ, "\015content-type:" };
+    { HDR_REQ, "\015content-type:"};
 
 static struct surlenc {
-    char hex2bin[256];
-    char bin2hex[16];
-    char skipchr[256];
+	char hex2bin[256];
+	char bin2hex[16];
+	char skipchr[256];
 } urlenc;
 
-static void initUrlcode(void) {
-    const char *p;
-    char *hex = "0123456789abcdefABCDEF";
-    char *bin2hex = "0123456789ABCDEF";
-    char *skip = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int i;
+static void initUrlcode(){
+	const char *p;
+	char *hex     = "0123456789abcdefABCDEF";
+	char *bin2hex = "0123456789ABCDEF";
+	char *skip    = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	int i;
 
-    memset(urlenc.hex2bin, -1, 256);
-    memset(urlenc.skipchr, 0, 256);
+	memset(urlenc.hex2bin, -1, 256);
+	memset(urlenc.skipchr, 0, 256);
 
-    for (i = 0; i < 16; i++)
-        urlenc.bin2hex[i] = bin2hex[i];
+	for (i=0; i< 16; i++)
+		urlenc.bin2hex[i] = bin2hex[i];
 
-    for (p = hex; *p; p++) {
-        if (*p >= '0' && *p <= '9') {
-            urlenc.hex2bin[(int)*p] = *p - '0';
-        } else if (*p >= 'A' && *p <= 'F') {
-            urlenc.hex2bin[(int)*p] = *p - 'A' + 10;
-        } else {
-            urlenc.hex2bin[(int)*p] = *p - 'a' + 10;
-        }
-    }
-    for (p = skip; *p; p++)
-        urlenc.skipchr[(int)*p] = 1;
+	for (p = hex; *p; p++){
+		if(p[0] >= '0' && p[0] <= '9'){
+			urlenc.hex2bin[(int)*p] = p[0] - '0';
+		}else if(p[0] >= 'A' && p[0] <= 'F'){
+			urlenc.hex2bin[(int)*p] = p[0] - 'A' +10;
+		}else{
+			urlenc.hex2bin[(int)*p] = p[0] - 'a' +10;
+		}
+	}
+	for (p = skip; *p; p++)
+		urlenc.skipchr[(int)*p] = 1;
+
 }
 
-VCL_STRING
-urlencode(VRT_CTX, VCL_BLOB blob) {
-    unsigned u;
-    char *rpp, *rp;
-    const char *p;
 
-    u = WS_Reserve_All(ctx->ws);
-    rpp = rp = ctx->ws->f;
+VCL_STRING urlencode(VRT_CTX, VCL_BLOB blob){
+	unsigned   u;
+	char       *rpp, *rp;
+	const char *p;
+	u = WS_ReserveAll(ctx->ws);
+	rpp = rp = ctx->ws->f;
 
-    for (p = blob->blob; p < (char *)(blob->blob + blob->len); p++) {
-        if (u < 4) {
-            WS_Release(ctx->ws, 0);
-            WS_MarkOverflow(ctx->ws);
-            return "";
-        }
-        if (urlenc.skipchr[(int)p[0]]) {
-            rp[0] = p[0];
-            rp++;
-            u--;
-        } else {
-            rp[0] = '%';
-            rp[1] = urlenc.bin2hex[(p[0] >> 4) & 0x0f];
-            rp[2] = urlenc.bin2hex[p[0] & 0x0f];
-            rp += 3;
-            u -= 3;
-        }
-    }
-    if (rp == rpp) {
-        WS_Release(ctx->ws, 0);
-        return "";
-    }
-    rp[0] = 0;
-    rp++;
-    u--;
 
-    WS_Release(ctx->ws, rp - rpp);
-    return rpp;
+	for (p = blob->blob; p < (char*)(blob->blob +blob->len); p++){
+		if(u < 4){
+			WS_Release(ctx->ws, 0);
+			WS_MarkOverflow(ctx->ws);
+			return "";
+		}
+		if(urlenc.skipchr[(int)p[0]]){
+			rp[0] = p[0];
+			rp++;
+			u--;
+		}else{
+			rp[0] = '%';
+			rp[1] = urlenc.bin2hex[p[0] >>4];
+			rp[2] = urlenc.bin2hex[p[0] & 0x0f];
+			rp+=3;
+			u -=3;
+		}
+	}
+	if(rp == rpp){
+		WS_Release(ctx->ws, 0);
+		return "";
+	}
+	rp[0] = 0;
+	rp++;
+	u--;
+
+	WS_Release(ctx->ws, rp - rpp);
+	return rpp;
 }
 
-VCL_BLOB
-urldecode(VRT_CTX, VCL_STRING txt) {
-    const char *last, *per, *nxtper;
-    unsigned u;
-    char *rpp, *rp, *plus;
-    struct vrt_blob *p;
+VCL_BLOB urldecode(VRT_CTX, VCL_STRING txt){
+	const char *last, *per, *nxtper;
+	unsigned   u;
+	char       *rpp, *rp, *plus;
+	struct vrt_blob *p;
+	p = (void*)WS_Alloc(ctx->ws, sizeof *p);
+	AN(p);
+	memset(p, 0, sizeof *p);
 
-    p = (void *)WS_Alloc(ctx->ws, sizeof *p);
-    AN(p);
-    memset(p, 0, sizeof *p);
+	u = WS_ReserveAll(ctx->ws);
+	rpp = rp = ctx->ws->f;
+	last = txt + strlen(txt);
+	ssize_t bodylen;
+	per = txt;
+	while(1){
+		nxtper = strchr(per, '%');
+		if(!nxtper) break;
+		if(nxtper + 2 > last) break;
+		if(u < 4){
+			WS_Release(ctx->ws, 0);
+			WS_MarkOverflow(ctx->ws);
+			return p;
+		}
+		if(nxtper != per){
+			bodylen = nxtper - per;
+			if(u < bodylen +1){
+				WS_Release(ctx->ws, 0);
+				WS_MarkOverflow(ctx->ws);
+				return p;
+			}
+			memcpy(rp, per, bodylen);
+			rp +=bodylen;
+			u  -=bodylen;
+		}
+		if(urlenc.hex2bin[(int)nxtper[1]] >= 0 && urlenc.hex2bin[(int)nxtper[2]] >= 0){
+			rp[0] = (urlenc.hex2bin[(int)nxtper[1]] << 4) | urlenc.hex2bin[(int)nxtper[2]];
+			rp ++;
+			u  --;
+			nxtper+=3;
+		}else{
+			rp[0] = '%';
+			rp ++;
+			u  --;
+			nxtper++;
+		}
+		per = nxtper;
+	}
 
-    u = WS_Reserve_All(ctx->ws);
-    rpp = rp = ctx->ws->f;
-    last = txt + strlen(txt);
-    ssize_t bodylen;
-    per = txt;
-    while (1) {
-        nxtper = strchr(per, '%');
-        if (!nxtper) break;
-        if (nxtper + 2 > last) break;
-        if (u < 4) {
-            WS_Release(ctx->ws, 0);
-            WS_MarkOverflow(ctx->ws);
-            return p;
-        }
-        if (nxtper != per) {
-            bodylen = nxtper - per;
-            if (u < bodylen + 1) {
-                WS_Release(ctx->ws, 0);
-                WS_MarkOverflow(ctx->ws);
-                return p;
-            }
-            memcpy(rp, per, bodylen);
-            rp += bodylen;
-            u -= bodylen;
-        }
-        if (urlenc.hex2bin[(int)nxtper[1]] >= 0 && urlenc.hex2bin[(int)nxtper[2]] >= 0) {
-            rp[0] = (urlenc.hex2bin[(int)nxtper[1]] << 4) | urlenc.hex2bin[(int)nxtper[2]];
-            rp++;
-            u--;
-            nxtper += 3;
-        } else {
-            rp[0] = '%';
-            rp++;
-            u--;
-            nxtper++;
-        }
-        per = nxtper;
-    }
+	if(last > per){
+		bodylen = last -per;
+		memcpy(rp, per, bodylen);
+		rp +=bodylen;
+		u  -=bodylen;
+	}
 
-    if (last > per) {
-        bodylen = last - per;
-        memcpy(rp, per, bodylen);
-        rp += bodylen;
-        u -= bodylen;
-    }
+	rp[0] = 0;
+	rp++;
+	u--;
+	p->len = rp -rpp -1;
 
-    rp[0] = 0;
-    rp++;
-    u--;
-    p->len = rp - rpp - 1;
+	plus = rpp;
+	while(1){
+		plus = strchr(plus, '+');
+		if(!plus) break;
+		plus[0] = ' ';
+	}
 
-    plus = rpp;
-    while (1) {
-        plus = strchr(plus, '+');
-        if (!plus) break;
-        plus[0] = ' ';
-    }
 
-    WS_Release(ctx->ws, rp - rpp);
-    p->blob = rpp;
-    return p;
+	WS_Release(ctx->ws, rp - rpp);
+	p->blob = rpp;
+	return p;
 }
 
 
 static int v_matchproto_(objiterate_f)
-IterCopyReqBody(void *priv, unsigned flush, const void *ptr, ssize_t l)
+IterCopyReqBody(void *priv, const void *ptr, ssize_t l)
 {
 	struct vsb *iter_vsb = priv;
 
@@ -185,7 +183,7 @@ VRB_Blob(VRT_CTX, struct vsb *vsb)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->req, REQ_MAGIC);
 
-	l = VRB_Iterate(ctx->req, IterCopyReqBody, (void*)vsb);
+	l = VRT_BODY_Iterate(ctx, IterCopyReqBody, vsb);
 	VSB_finish(vsb);
 	if (l < 0) {
 		VSB_delete(vsb);
@@ -216,11 +214,7 @@ VCL_BLOB search_plain(VRT_CTX, VCL_STRING key, VCL_STRING glue, struct vsb *vsb)
 	glen   = strlen(glue);
 	keylen = strlen(key);
 	
-	#if VRT_MAJOR_VERSION > 9
 	u = WS_ReserveAll(ctx->ws);
-	#else
-	u = WS_Reserve(ctx->ws, 0);
-	#endif
 	rpp = rp = ctx->ws->f;
 	
 	while(1){
@@ -305,11 +299,7 @@ VCL_BLOB search_multipart(VRT_CTX,VCL_STRING key, VCL_STRING glue, struct vsb *v
 	keylen = strlen(key);
 	glen   = strlen(glue);
 
-	#if VRT_MAJOR_VERSION > 9
 	u = WS_ReserveAll(ctx->ws);
-	#else
-	u = WS_Reserve(ctx->ws, 0);
-	#endif
 	rpp = rp = ctx->ws->f;
 
 	while(1){
@@ -380,11 +370,7 @@ VCL_BLOB search_urlencoded(VRT_CTX,VCL_STRING key, VCL_STRING glue, struct vsb *
 	last   = porg + VSB_len(vsb);
 	keylen = strlen(key);
 	
-	#if VRT_MAJOR_VERSION > 9
 	u = WS_ReserveAll(ctx->ws);
-	#else
-	u = WS_Reserve(ctx->ws, 0);
-	#endif
 	rpp    = rp = ctx->ws->f;
 	
 	
@@ -440,30 +426,32 @@ VCL_BLOB search_urlencoded(VRT_CTX,VCL_STRING key, VCL_STRING glue, struct vsb *
 
 
 int
-vmod_event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e) {
-    switch (e) {
-    case VCL_EVENT_LOAD:
-        initUrlcode();
-        break;
-    default:
-        break;
-    }
-    return (0);
+vmod_event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
+{
+	switch (e) {
+	case VCL_EVENT_LOAD:
+		initUrlcode();
+		break;
+	default:
+		break;
+	}
+
+	return (0);
 }
 
-static void vmod_free(void *priv) {
-    struct vmod_priv_parseform *tmp = priv;
-    VSB_delete(tmp->vsb);
-    FREE_OBJ(tmp);
+static void vmod_free(void *priv){
+	struct vmod_priv_parseform *tmp = priv;
+	VSB_delete(tmp->vsb);
+	FREE_OBJ(tmp);
 }
 
-void getbody(VRT_CTX, struct vmod_priv **priv) {
-    struct vmod_priv_parseform *tmp;
-    ALLOC_OBJ(tmp, VMOD_PRIV_PARSEFORM_MAGIC);
-    (*priv)->priv = tmp;
-    tmp->vsb = VSB_new_auto();
-    (*priv)->free = vmod_free;
-    VRB_Blob(ctx, tmp->vsb);
+void getbody(VRT_CTX, struct vmod_priv **priv){
+	struct vmod_priv_parseform *tmp;
+	ALLOC_OBJ(tmp,VMOD_PRIV_PARSEFORM_MAGIC);
+	(*priv)->priv = tmp;
+	tmp->vsb=VSB_new_auto();
+	(*priv)->free = vmod_free;
+	VRB_Blob(ctx, tmp->vsb);
 }
 
 
