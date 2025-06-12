@@ -442,7 +442,7 @@ vmod_event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 
 static void vmod_free(void *priv){
 	struct vmod_priv_parseform *tmp = priv;
-	VSB_destroy(tmp->vsb);
+	VSB_destroy(&tmp->vsb);
 	FREE_OBJ(tmp);
 }
 
