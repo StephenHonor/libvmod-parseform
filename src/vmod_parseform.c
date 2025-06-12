@@ -168,7 +168,7 @@ VCL_BLOB urldecode(VRT_CTX, VCL_STRING txt){
 
 
 static int v_matchproto_(objiterate_f)
-IterCopyReqBody(void *priv, const void *ptr, ssize_t l)
+IterCopyReqBody(void *priv, unsigned flush, const void *ptr, ssize_t l)
 {
 	struct vsb *iter_vsb = priv;
 
@@ -183,7 +183,7 @@ VRB_Blob(VRT_CTX, struct vsb *vsb)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->req, REQ_MAGIC);
 
-	l = VRB_Iterate(ctx->req, IterCopyReqBody, vsb);
+	l = VRB_Iterate((const struct req *)ctx->req, IterCopyReqBody, (void*)vsb);
 	VSB_finish(vsb);
 	if (l < 0) {
 		VSB_delete(vsb);
