@@ -12,7 +12,8 @@
 #include "vsb.h"
 #include "vtim.h"
 #include "vcc_parseform_if.h"
-struct vmod_priv_parseform{
+
+struct vmod_priv_parseform {
 	unsigned	magic;
 #define VMOD_PRIV_PARSEFORM_MAGIC	0xf8afce84
 	struct vsb	*vsb;
@@ -446,12 +447,18 @@ static void vmod_free(VRT_CTX, void *priv){
 	FREE_OBJ(tmp);
 }
 
+static const struct vmod_priv_methods priv_task_methods[1] = {{
+    .magic = VMOD_PRIV_METHODS_MAGIC,
+    .type = "vmod_parseform_priv_task",
+    .fini = vmod_free
+}};
+
 void getbody(VRT_CTX, struct vmod_priv **priv){
 	struct vmod_priv_parseform *tmp;
 	ALLOC_OBJ(tmp,VMOD_PRIV_PARSEFORM_MAGIC);
 	(*priv)->priv = tmp;
-	tmp->vsb=VSB_new_auto();
-	(*priv)->fini = vmod_free;
+	tmp->vsb = VSB_new_auto();
+	(*priv)->methods = priv_task_methods;
 	VRB_Blob(ctx, tmp->vsb);
 }
 
