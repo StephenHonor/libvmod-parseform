@@ -467,7 +467,7 @@ VCL_BLOB
 vmod_get_blob(VRT_CTX, struct vmod_priv *priv, VCL_STRING key, VCL_STRING glue, VCL_BOOL decode)
 {
 
-	if (ctx->req->req_body_status != REQ_BODY_CACHED) {
+	if (ctx->req->req_body_status != BS_CACHED) {
 		VSLb(ctx->vsl, SLT_VCL_Error,
 		   "Unbuffered req.body");
 		struct vrt_blob *nr = NULL;
