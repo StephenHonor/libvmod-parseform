@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR(src/vmod_parseform.vcc)
 AC_CONFIG_HEADER([config.h])
 
-ssssssssssssssAC_GNU_SOURCE
+AC_GNU_SOURCE
 
 AM_INIT_AUTOMAKE([1.12 -Wall -Werror foreign parallel-tests])
 AM_SILENT_RULES([yes])
