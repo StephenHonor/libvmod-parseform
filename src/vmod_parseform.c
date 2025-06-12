@@ -440,7 +440,7 @@ vmod_event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 	return (0);
 }
 
-static void vmod_free(void *priv){
+static void vmod_free(VRT_CTX, void *priv){
 	struct vmod_priv_parseform *tmp = priv;
 	VSB_destroy(&tmp->vsb);
 	FREE_OBJ(tmp);
@@ -451,7 +451,7 @@ void getbody(VRT_CTX, struct vmod_priv **priv){
 	ALLOC_OBJ(tmp,VMOD_PRIV_PARSEFORM_MAGIC);
 	(*priv)->priv = tmp;
 	tmp->vsb=VSB_new_auto();
-	(*priv)->free = vmod_free;
+	(*priv)->fini = vmod_free;
 	VRB_Blob(ctx, tmp->vsb);
 }
 
