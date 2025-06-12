@@ -183,7 +183,7 @@ VRB_Blob(VRT_CTX, struct vsb *vsb)
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->req, REQ_MAGIC);
 
-	l = VRB_Iterate(ctx, IterCopyReqBody, vsb);
+	l = VRB_Iterate(ctx->req, IterCopyReqBody, vsb);
 	VSB_finish(vsb);
 	if (l < 0) {
 		VSB_delete(vsb);
