@@ -187,7 +187,7 @@ VRB_Blob(VRT_CTX, struct vsb *vsb)
 	l = VRB_Iterate(ctx->req->wrk, ctx->vsl, ctx->req, IterCopyReqBody, (void*)vsb);
 	VSB_finish(vsb);
 	if (l < 0) {
-		VSB_delete(vsb);
+		VSB_destroy(&vsb);
 		VSLb(ctx->vsl, SLT_VCL_Error,
 		    "Iteration on req.body didn't succeed.");
 		return;
@@ -442,7 +442,7 @@ vmod_event_function(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 
 static void vmod_free(void *priv){
 	struct vmod_priv_parseform *tmp = priv;
-	VSB_delete(tmp->vsb);
+	VSB_destroy(tmp->vsb);
 	FREE_OBJ(tmp);
 }
 
