@@ -6,14 +6,13 @@
 # request-body access based on libvmod-bodyaccess( https://github.com/aondio/libvmod-bodyaccess )
 #
 
-$Module parseform 3 Parseform VMOD
+$Module parseform 3 'Parseform VMOD'
 $ABI vrt
 
 DESCRIPTION
 ===========
 
 Get POST value
-
 
 $Event event_function
 
