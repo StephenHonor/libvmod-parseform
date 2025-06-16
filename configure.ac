@@ -16,7 +16,6 @@ LT_PREREQ([2.2.6])
 LT_INIT([dlopen disable-static])
 
 ax_enable_compile_warnings=error
-AX_COMPILER_FLAGS_CFLAGS
 AX_PTHREAD(,[AC_MSG_ERROR([Could not configure pthreads support])])
 
 LIBS="$PTHREAD_LIBS $LIBS"
